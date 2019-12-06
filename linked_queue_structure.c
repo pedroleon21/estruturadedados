@@ -3,6 +3,7 @@
 #include<string.h>
 #include<time.h>
 
+//definição das estruturas usadas
 typedef struct no
 {
     int var;
@@ -15,22 +16,34 @@ typedef struct fila
     struct no * fim;
 } fila;
 
-void mostrar_i(no * n);
+//portotipação
+void saindo(no * n);//função para limpar não vazar memoria...
+int buscar(no * n,int num);
+void mostrar_i();
+int pop_ini();
 no * cria_no();
 fila * cria_fila();
 void menu();
 void push_ini(int num);
 void push_fim(int num);
 int pop_fim();
-void mostrar(no * n);
-
-struct fila * F;
+void mostrar();
 void menu();
+
+//variaveis gobais
+struct fila * F=NULL;
+
 int main()
 {
+    int i;
+    for(i=0;i<10000;i++)
+    {
+        push_fim(i);
+    }
     menu();
     return 0;
 }
+
 void menu()
 {
     int op=1;
@@ -46,6 +59,7 @@ void menu()
         printf("\n6.mostrar invetida");
         printf("\n7.buscar     ");
         printf("\n8.ordenar    ");
+        printf("\n9.apagar     ");
         scanf("%d",&op);
         switch(op)
         {
@@ -62,25 +76,60 @@ void menu()
             op=1;
             break;
         case 3:
+            op=pop_ini();
+            if(op!=-1)
+            {
+                printf("\n\n\tnumero: %d ",op);
+
+            }
+            else printf("\n\n\tNULL ");
+            op=1;
             break;
         case 4:
             op=pop_fim();
             if(op!=-1)
             {
                 printf("\n\n\tnumero: %d ",op);
-                op=1;
             }
             else printf("\n\n\tNULL ");
             op=1;
             break;
         case 5:
-            mostrar(F->ini);
+            mostrar();
             break;
         case 6:
-            mostrar_i(F->fim);
+            mostrar_i();
+            break;
+        case 7:
+            printf("\nDigite o Numero: ");
+            scanf("%d",&op);
+            if(F!=NULL)
+            {
+                if(op==buscar(F->ini,op))
+                {
+                    printf("\n\n\tNa fila");
+                }
+                else
+                {
+                    printf("\n\n\tNão encontrado");
+                }
+            }
+            else
+            {
+                printf("\n\n\tVazio");
+            }
+            op=1;
+            break;
+            case 9:
+            if(F!=NULL)
+            {
+                saindo(F->ini);
+                F=NULL;
+            }
             break;
         case 0:
-            printf("saindo.......");
+            printf("saindo");
+            if(F!=NULL)saindo(F->ini);
             break;
         default:
             printf("\n Opção invalida\n\n");
@@ -88,45 +137,105 @@ void menu()
         }
     }
 }
+/*int bubble()
+{
+    no *aux0,*aux1,*aux2,*aux3;
+    int i,j,tamanho,flag=1;
+    for(i=0;i<tamanho && flag;i++)
+    {
+        flag=0;
+        for(j=0;j<tamanho-i;j++)
+        {
+            if(aux1->var>aux2->var)
+            {
+                if()
 
-fila * cria_fila()
+                flag=1;
+            }
+        }
+
+    }
+}*/
+
+void saindo(no * n)
 {
-    return (fila*)(calloc(1,sizeof(fila)));
+    no *aux;
+    if(n!=NULL)
+    {
+        aux=n->prx;
+        free(n);
+        saindo(aux);
+    }
 }
-void push_ini(int num)
+int buscar(no * n,int num)
 {
+    if(n!=NULL)
+    {
+        if(n->var==num)
+        {
+            return n->var;
+        }
+        else
+        {
+            return buscar(n->prx,num);
+        }
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+fila * cria_fila()//função para alocar fila com ponteiros nulos
+{
+    fila * f;
+    f=(malloc(sizeof(fila)));
+    f->fim=f->ini=NULL;
+    return f;
+}
+void push_ini(int num) //push no inicio na fila
+{
+    no * aux,*newn;
     if(F==NULL) F=cria_fila();
     if(F->ini==NULL) F->ini=F->fim=cria_no();
     else
     {
-        F->ini->ant=cria_no();
-        F->ini->ant=F->ini;
-        F->ini=F->ini->ant;
+        aux=F->fim;
+        newn=cria_no();
+        aux->ant=newn;
+        newn->prx=aux;
+        F->ini=newn;
     }
     F->ini->var=num;
 }
-void push_fim(int num)
+void push_fim(int num) // push no fim da fila
 {
+    no * aux, *newn;
     if(F==NULL) F=cria_fila();
     if(F->fim==NULL) F->ini=F->fim=cria_no();
     else
     {
-        F->fim->prx=cria_no();
-        F->fim->prx->ant=F->fim;
-        F->fim=F->fim->prx;
+        aux=F->fim;
+        newn=cria_no();
+        newn->ant=aux;
+        aux->prx=newn;
+        F->fim=newn;
     }
     F->fim->var=num;
 }
-no * cria_no()
+no * cria_no() // aloca no com valores nulos
 {
-    return (no*)(calloc(1,sizeof(no)));
+    no * n;
+    n=malloc(sizeof(n));
+    n->var=0;
+    n->ant=n->prx=NULL;
+    return n;
 }
-int pop_fim()
+int pop_fim() //tira o ultimo da fila
 {
     int num;
-    no *aux;
+    no *aux=NULL;
     if(F==NULL) return -1;
-    aux=F->fim;
     if(F->fim==F->ini)
     {
         num=F->fim->var;
@@ -143,21 +252,56 @@ int pop_fim()
     free(aux);
     return num;
 }
-void mostrar(no * n)
+int pop_ini() //tira o prim da fila
 {
-    if(n!= NULL)
+    int num;
+    no *aux=NULL;
+    if(F==NULL) return -1;
+    aux=F->ini;
+    if(F->fim==F->ini)
     {
-        printf(" %d",n->var);
-        mostrar(n->prx);
+        num=F->ini->var;
+        F->fim=F->ini=NULL;
+        free(F);
+        F=NULL;
     }
-    return;
+    else
+    {
+        num=F->ini->var;
+        F->ini=F->ini->prx;
+        F->ini->ant=NULL;
+    }
+    free(aux);
+    return num;
 }
-void mostrar_i(no * n)
+
+void mostrar() //mostrar do primeiro ao ultimo
 {
-    if(n!= NULL)
+    no *aux;
+    if(F==NULL)
     {
-        printf(" %d",n->var);
-        mostrar(n->ant);
+        printf("\n Vazio");
+        return ;
     }
-    return;
+    aux=F->ini;
+    while(aux!=NULL)
+    {
+        printf(" %d",aux->var);
+        aux=aux->prx;
+    }
+}
+void mostrar_i() // mostra do ultimo ao primeiro (invertido)
+{
+    no *aux;
+    if(F==NULL)
+    {
+        printf("\n Vazio");
+        return ;
+    }
+    aux=F->fim;
+    while(aux!=NULL)
+    {
+        printf(" %d",aux->var);
+        aux=aux->ant;
+    }
 }
